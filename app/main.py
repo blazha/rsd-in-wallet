@@ -1,13 +1,16 @@
-from fastapi import FastAPI, Depends, Query
-from typing import Annotated, Sequence
+from fastapi import FastAPI, Depends, Query, HTTPException
+from typing import Annotated
 from sqlmodel import Session, select
 
+from .currency_converter import get_cached_calculation, get_cache_key
 from .database import get_session, create_db_and_tables
-from .models import Wallet, WalletCreate, WalletPublic
+from .models import Wallet, WalletCreate, WalletPublic, WalletRead
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
 app = FastAPI()
+
+SUPPORTED_CURRENCIES = ["RSD"]
 
 
 @app.on_event("startup")
@@ -31,14 +34,27 @@ def add_wallet(wallet: WalletCreate, session: SessionDep):
     return db_wallet
 
 
-# TODO: add conversion currency code in query params e.g. ?conversion_currency_code=RSD
-# read and cache conversion once per day
-@app.get("/wallet/", response_model=list[WalletPublic])
+@app.get("/wallet/", response_model=list[WalletRead])
 def read_wallet(
     session: SessionDep,
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
+    conversion_currency_code: str = "RSD",
 ):
-    wallet = session.exec(select(Wallet).offset(offset).limit(limit)).all()
+    if conversion_currency_code not in SUPPORTED_CURRENCIES:
+        raise HTTPException(status_code=400, detail=f"Currency code '{conversion_currency_code}' not supported")
 
-    return wallet
+    db_wallets = session.exec(select(Wallet).offset(offset).limit(limit)).all()
+
+    conversion_rate = get_cached_calculation(get_cache_key())
+
+    wallets = [
+        WalletRead(
+            **wallet.dict(),
+            converted_currency_code=conversion_currency_code,
+            converted_amount=wallet.amount * conversion_rate if wallet.amount else 0
+        )
+        for wallet in db_wallets
+    ]
+
+    return wallets

@@ -3,7 +3,7 @@ from sqlmodel import Field, SQLModel
 
 class WalletBase(SQLModel):
     currency_code: str = Field(index=True)
-    amount: int | None = Field(default=0, index=False)
+    amount: float | None = Field(default=0, index=False)
 
 
 class Wallet(WalletBase, table=True):
@@ -20,5 +20,5 @@ class WalletPublic(WalletBase):
 
 class WalletRead(WalletBase):
     converted_currency_code: str
-    amount: int
+    converted_amount: float
 
