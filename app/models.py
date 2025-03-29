@@ -1,4 +1,5 @@
 from sqlmodel import Field, SQLModel
+from pydantic import BaseModel
 
 
 class WalletBase(SQLModel):
@@ -26,3 +27,16 @@ class WalletRead(WalletBase):
 class WalletResponse(SQLModel):
     wallets: list[WalletRead]
     total_converted_amount: float
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    username: str
+    full_name: str
+    role: str
+    hashed_password: str
