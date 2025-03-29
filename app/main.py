@@ -31,6 +31,8 @@ def add_wallet(wallet: WalletCreate, session: SessionDep):
     return db_wallet
 
 
+# TODO: add conversion currency code in query params e.g. ?conversion_currency_code=RSD
+# read and cache conversion once per day
 @app.get("/wallet/", response_model=list[WalletPublic])
 def read_wallet(
     session: SessionDep,

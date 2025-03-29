@@ -26,9 +26,9 @@ The system will return:
 - 718 RSD total
 
 ### Endpoints:
-- TBD
+- Open API page hosted on http://127.0.0.1:8000/docs
 
-## Local setup:
+### Local setup:
 - python3 -m venv venv
 - source venv/bin/activate
 - cd app
