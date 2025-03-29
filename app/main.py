@@ -25,7 +25,31 @@ def read_root():
 
 @app.post("/wallet/add", response_model=WalletPublic)
 def add_wallet(wallet: WalletCreate, session: SessionDep):
-    db_wallet = Wallet.model_validate(wallet)
+    db_wallet = session.exec(select(Wallet).where(Wallet.currency_code == wallet.currency_code)).first()
+
+    if db_wallet:
+        db_wallet.amount += wallet.amount
+    else:
+        db_wallet = Wallet.model_validate(wallet)
+
+    session.add(db_wallet)
+    session.commit()
+    session.refresh(db_wallet)
+
+    return db_wallet
+
+
+@app.post("/wallet/remove", response_model=WalletPublic)
+def add_wallet(wallet: WalletCreate, session: SessionDep):
+    db_wallet = session.exec(select(Wallet).where(Wallet.currency_code == wallet.currency_code)).first()
+
+    if db_wallet:
+        db_wallet.amount -= wallet.amount
+        if db_wallet.amount < 0:
+            raise HTTPException(status_code=400,
+                                detail="Cannot remove from your wallet more than you have!")
+    else:
+        raise HTTPException(status_code=400, detail=f"Currency code '{wallet.currency_code}' not exists, add it first")
 
     session.add(db_wallet)
     session.commit()
