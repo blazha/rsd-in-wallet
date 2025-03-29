@@ -29,8 +29,8 @@ The system will return:
 - TBD
 
 ## Local setup:
-- cd app
 - python3 -m venv venv
 - source venv/bin/activate
+- cd app
 - pip install -r api/requirements.txt
 - fastapi dev main.py
