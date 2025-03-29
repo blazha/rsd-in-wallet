@@ -3,7 +3,7 @@ from typing import Annotated, Sequence
 from sqlmodel import Session, select
 
 from .database import get_session, create_db_and_tables
-from .models import Hero
+from .models import Wallet, WalletCreate, WalletPublic
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
@@ -20,19 +20,23 @@ def read_root():
     return {"status": "ok"}
 
 
-@app.post("/heroes/")
-def create_hero(hero: Hero, session: SessionDep) -> Hero:
-    session.add(hero)
+@app.post("/wallet/add", response_model=WalletPublic)
+def add_wallet(wallet: WalletCreate, session: SessionDep):
+    db_wallet = Wallet.model_validate(wallet)
+
+    session.add(db_wallet)
     session.commit()
-    session.refresh(hero)
-    return hero
+    session.refresh(db_wallet)
+
+    return db_wallet
 
 
-@app.get("/heroes/")
-def read_heroes(
-        session: SessionDep,
-        offset: int = 0,
-        limit: Annotated[int, Query(le=100)] = 100,
-) -> Sequence[Hero]:
-    heroes = session.exec(select(Hero).offset(offset).limit(limit)).all()
-    return heroes
+@app.get("/wallet/", response_model=list[WalletPublic])
+def read_wallet(
+    session: SessionDep,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100,
+):
+    wallet = session.exec(select(Wallet).offset(offset).limit(limit)).all()
+
+    return wallet
