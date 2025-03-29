@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 
 from .currency_converter import get_cached_calculation, get_cache_key
 from .database import get_session, create_db_and_tables
-from .models import Wallet, WalletCreate, WalletPublic, WalletRead
+from .models import Wallet, WalletCreate, WalletPublic, WalletRead, WalletResponse
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
@@ -34,7 +34,7 @@ def add_wallet(wallet: WalletCreate, session: SessionDep):
     return db_wallet
 
 
-@app.get("/wallet/", response_model=list[WalletRead])
+@app.get("/wallet/", response_model=WalletResponse)
 def read_wallet(
     session: SessionDep,
     offset: int = 0,
@@ -57,4 +57,6 @@ def read_wallet(
         for wallet in db_wallets
     ]
 
-    return wallets
+    total_converted_amount = sum(wallet.converted_amount for wallet in wallets)
+
+    return WalletResponse(wallets=wallets, total_converted_amount=total_converted_amount)

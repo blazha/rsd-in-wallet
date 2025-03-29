@@ -22,3 +22,7 @@ class WalletRead(WalletBase):
     converted_currency_code: str
     converted_amount: float
 
+
+class WalletResponse(SQLModel):
+    wallets: list[WalletRead]
+    total_converted_amount: float
